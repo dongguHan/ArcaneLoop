@@ -1,39 +1,143 @@
 using UnityEngine;
+using System.Collections;
 
 public class EnemyAI : MonoBehaviour
 {
-    public float speed = 2f;                // Move speed
-    public float detectionRange = 10f;      // Player detection range
-    public float obstacleCheckDistance = 1f;// Obstacle detection distance
-    public LayerMask obstacleLayer;         // Obstacle layer
+    [Header("Movement Settings")]
+    public float speed = 2f;
+    public float detectionRange = 10f;
+    public float obstacleCheckDistance = 1f;
+    public LayerMask obstacleLayer;
+
+    [Header("Attack Settings")]
+    public float attackRange = 1.5f;        // 공격 시작 범위
+    public float attackWindupTime = 0.5f;   // 공격 준비 시간
+    public float damageTime = 0.2f;         // 공격 판정 타이밍
+    public float attackEndTime = 0.3f;      // 공격 후 마무리 시간
+    public float attackCooldown = 1.5f;     // 공격 쿨다운
+
     private Rigidbody2D rb;
     private Transform targetPlayer;
-
     private SpriteRenderer spriteRenderer;
+
+    private bool isDead = false;
+    private bool isAttacking = false;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        spriteRenderer = GetComponentInChildren<SpriteRenderer>(); // For sprite flip
+        rb.bodyType = RigidbodyType2D.Kinematic;
+        spriteRenderer = GetComponentInChildren<SpriteRenderer>();
     }
 
     void Update()
     {
-        // Find nearest player (Gray first > then nearest Black/White)
+        if (isDead) return;
+
         FindNearestPlayer();
 
-        if (targetPlayer != null)
+        if (targetPlayer != null && !isAttacking)
         {
-            FollowPlayer();
+            float dist = Vector2.Distance(transform.position, targetPlayer.position);
+
+            if (dist <= attackRange)
+            {
+                StartCoroutine(AttackRoutine(targetPlayer.gameObject));
+            }
+            else
+            {
+                FollowPlayer();
+            }
         }
+    }
+
+    void FollowPlayer()
+    {
+        Vector2 direction = (targetPlayer.position - transform.position).normalized;
+
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, direction, obstacleCheckDistance, obstacleLayer);
+        if (hit.collider != null)
+        {
+            Vector2 perpDirection = Vector2.Perpendicular(direction);
+            direction = (Random.value > 0.5f) ? perpDirection : -perpDirection;
+        }
+
+        Vector2 newPos = (Vector2)transform.position + direction * speed * Time.deltaTime;
+        rb.MovePosition(newPos);
+
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.flipX = (targetPlayer.position.x < transform.position.x);
+        }
+    }
+
+    IEnumerator AttackRoutine(GameObject player)
+    {
+        // 공격 시작: 이동 정지
+        isAttacking = true;
+        rb.linearVelocity = Vector2.zero;
+
+        // 공격 준비 (모션 예열)
+        yield return new WaitForSeconds(attackWindupTime);
+
+        // 공격 판정 (이 시점에서만 데미지)
+        float distanceToPlayer = Vector2.Distance(transform.position, player.transform.position);
+        if (distanceToPlayer <= attackRange)
+        {
+            PlayerInvulnerability invuln = player.GetComponent<PlayerInvulnerability>();
+            if (invuln != null && invuln.CanTakeDamage())
+            {
+                PlayerManager pm = player.GetComponentInParent<PlayerManager>();
+                if (pm != null)
+                {
+                    pm.TakeDamage(1);
+                    invuln.StartInvuln();
+                }
+            }
+        }
+
+        // 공격 후 모션 시간 (공격 후 자연스러운 딜레이)
+        yield return new WaitForSeconds(attackEndTime);
+
+        // 공격 모션 끝! → 바로 이동 가능
+        isAttacking = false;
+
+        // 다음 공격까지 쿨타임 (이동 가능, 공격만 금지)
+        yield return new WaitForSeconds(attackCooldown);
+    }
+
+
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if (isDead) return;
+
+        if (other.CompareTag("PlayerAttack"))
+        {
+            Die();
+        }
+    }
+
+    void Die()
+    {
+        isDead = true;
+        spriteRenderer.enabled = false;
+        rb.simulated = false;
+        StopAllCoroutines();
+        StartCoroutine(Respawn());
+    }
+
+    IEnumerator Respawn()
+    {
+        yield return new WaitForSeconds(5f);
+        isDead = false;
+        spriteRenderer.enabled = true;
+        rb.simulated = true;
     }
 
     void FindNearestPlayer()
     {
-        // 1. Try Gray player first
         GameObject[] players = GameObject.FindGameObjectsWithTag("PlayerGray");
 
-        // If Gray does not exist or is invalid �� search Black + White
         if (players.Length == 0 || !HasValidPlayer(players))
         {
             players = GameObject.FindGameObjectsWithTag("PlayerBlack");
@@ -46,7 +150,7 @@ public class EnemyAI : MonoBehaviour
 
         foreach (GameObject player in players)
         {
-            if (!IsValidPlayer(player)) continue; // skip invalid players
+            if (!IsValidPlayer(player)) continue;
 
             float dist = Vector2.Distance(transform.position, player.transform.position);
             if (dist < minDist)
@@ -59,34 +163,6 @@ public class EnemyAI : MonoBehaviour
         targetPlayer = nearest;
     }
 
-    void FollowPlayer()
-    {
-        Vector2 direction = (targetPlayer.position - transform.position).normalized;
-
-        // Obstacle check
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, direction, obstacleCheckDistance, obstacleLayer);
-
-        if (hit.collider != null)
-        {
-            // If obstacle detected �� avoid by moving left/right (random simple avoid)
-            Vector2 perpDirection = Vector2.Perpendicular(direction);
-            if (Random.value > 0.5f)
-                direction = perpDirection;
-            else
-                direction = -perpDirection;
-        }
-
-        Vector2 newPos = (Vector2)transform.position + direction * speed * Time.deltaTime;
-        rb.MovePosition(newPos);
-
-        // Flip sprite based on player position
-        if (spriteRenderer != null)
-        {
-            spriteRenderer.flipX = (targetPlayer.position.x < transform.position.x);
-        }
-    }
-
-    // Combine arrays (Black + White)
     GameObject[] CombineArrays(GameObject[] a1, GameObject[] a2)
     {
         GameObject[] result = new GameObject[a1.Length + a2.Length];
@@ -95,15 +171,11 @@ public class EnemyAI : MonoBehaviour
         return result;
     }
 
-    // Check if player is valid
     bool IsValidPlayer(GameObject player)
     {
-        if (player == null) return false;
-        if (!player.activeInHierarchy) return false; // Skip inactive objects
-        return true;
+        return player != null && player.activeInHierarchy;
     }
 
-    // Check if array has at least one valid player
     bool HasValidPlayer(GameObject[] players)
     {
         foreach (GameObject p in players)
@@ -111,15 +183,5 @@ public class EnemyAI : MonoBehaviour
             if (IsValidPlayer(p)) return true;
         }
         return false;
-    }
-
-    void OnDrawGizmosSelected()
-    {
-        // Debug Raycast line
-        if (targetPlayer != null)
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawLine(transform.position, transform.position + (targetPlayer.position - transform.position).normalized * obstacleCheckDistance);
-        }
     }
 }

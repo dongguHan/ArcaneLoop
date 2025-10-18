@@ -4,64 +4,63 @@ using System.Collections;
 
 public class PlayerManager : MonoBehaviour
 {
+    [Header("Player Objects")]
     public GameObject playerBlack;
     public GameObject playerWhite;
     public GameObject playerGray;
 
+    [Header("Movement Time Settings")]
     public float minMoveTime = 0.1f;
     public float maxMoveTime = 0.7f;
 
-    public bool isBlack = false;
-    public bool isTransform = false;
+    [Header("Shared HP")]
+    public int maxHealth = 5;
+    private int currentHealth;
 
-    private void Start()
+    [HideInInspector] public bool isBlack = false;
+    [HideInInspector] public bool isTransform = false;
+
+    public bool IsGrayActive => playerGray != null && playerGray.activeSelf;
+
+    void Start()
     {
+        currentHealth = maxHealth;
         playerBlack.SetActive(true);
         playerWhite.SetActive(true);
         playerGray.SetActive(false);
     }
 
-    private void Update()
+    void Update()
     {
         HandleTransformInput();
     }
 
     private void HandleTransformInput()
     {
-        if (!playerGray.activeSelf)
+        if (!playerGray.activeSelf && !isTransform)
         {
             if (Keyboard.current.shiftKey.wasPressedThisFrame)
-            {
-                StartCoroutine(MoveAndActivateGray(playerWhite, playerBlack.transform.position));
-                isBlack = true;
-            }
+                StartCoroutine(MoveAndActivateGray(playerWhite, playerBlack.transform.position, true));
             else if (Keyboard.current.spaceKey.wasPressedThisFrame)
-            {
-                StartCoroutine(MoveAndActivateGray(playerBlack, playerWhite.transform.position));
-                isBlack = false;
-            }
+                StartCoroutine(MoveAndActivateGray(playerBlack, playerWhite.transform.position, false));
         }
-        else
+        else if (playerGray.activeSelf && isTransform && !playerGray.GetComponent<PlayerAttack>().isAttacking)
         {
             if (Keyboard.current.eKey.wasPressedThisFrame)
-            {
                 DeactivateGray();
-            }
         }
     }
 
-    private IEnumerator MoveAndActivateGray(GameObject mover, Vector3 targetPosition)
+    private IEnumerator MoveAndActivateGray(GameObject mover, Vector3 targetPosition, bool blackActive)
     {
-        isTransform = true;
         mover.SetActive(true);
 
         Vector3 start = mover.transform.position;
         float distance = Vector3.Distance(start, targetPosition);
-        float maxDistance = Vector3.Distance(Vector3.zero, new Vector3(1920f, 1080f, 0f)); // 최대 화면 대각 거리
+        float maxDistance = Vector3.Distance(Vector3.zero, new Vector3(1920f, 1080f, 0f));
         float moveTime = Mathf.Lerp(minMoveTime, maxMoveTime, distance / maxDistance);
 
         float elapsed = 0f;
-
         while (elapsed < moveTime)
         {
             mover.transform.position = Vector3.Lerp(start, targetPosition, elapsed / moveTime);
@@ -71,7 +70,7 @@ public class PlayerManager : MonoBehaviour
 
         mover.transform.position = targetPosition;
 
-        // 위치가 같아지면 Gray 활성화
+        // Gray 활성화
         playerGray.transform.position = targetPosition;
         playerGray.SetActive(true);
 
@@ -79,15 +78,14 @@ public class PlayerManager : MonoBehaviour
         playerBlack.SetActive(false);
         playerWhite.SetActive(false);
 
-        // 이동 역할만 한 오브젝트는 비활성화
         mover.SetActive(false);
+        isBlack = blackActive;
+        isTransform = true;
     }
 
     private void DeactivateGray()
     {
-        isTransform = false;
         Vector3 pos = playerGray.transform.position;
-
         playerGray.SetActive(false);
 
         playerBlack.transform.position = pos;
@@ -95,5 +93,46 @@ public class PlayerManager : MonoBehaviour
 
         playerBlack.SetActive(true);
         playerWhite.SetActive(true);
+
+        isTransform = false;
+    }
+
+    public void TakeDamage(int amount)
+    {
+        currentHealth -= amount;
+        Debug.Log($"Player HP: {currentHealth}");
+        if (currentHealth <= 0)
+            Die();
+    }
+
+    private void Die()
+    {
+        Debug.Log("Player Dead");
+        // TODO: 리스폰 혹은 게임 오버 처리
+    }
+
+    // 카메라용 중심 좌표 계산
+    public Vector3 GetCameraTargetPosition()
+    {
+        if (IsGrayActive)
+        {
+            // Gray만 추적
+            return playerGray.transform.position;
+        }
+
+        // 두 캐릭터 평균 위치 추적
+        if (playerBlack.activeSelf && playerWhite.activeSelf)
+        {
+            return (playerBlack.transform.position + playerWhite.transform.position) * 0.5f;
+        }
+
+        // 예외적으로 하나만 활성일 경우 대비
+        if (playerBlack.activeSelf)
+            return playerBlack.transform.position;
+        if (playerWhite.activeSelf)
+            return playerWhite.transform.position;
+
+        // 기본값
+        return transform.position;
     }
 }
