@@ -21,6 +21,7 @@ public class PlayerManager : MonoBehaviour
     [Header("Shared HP")]
     public int maxHealth = 5;
     private int currentHealth;
+    private bool isTransforming = false;
 
     [HideInInspector] public bool isBlack = false;
     [HideInInspector] public bool isTransform = false;
@@ -58,6 +59,7 @@ public class PlayerManager : MonoBehaviour
 
     private IEnumerator MoveAndActivateGray(GameObject mover, Vector3 targetPosition, bool blackActive)
     {
+        isTransforming = true;
         mover.SetActive(true);
 
         Vector3 start = mover.transform.position;
@@ -93,6 +95,7 @@ public class PlayerManager : MonoBehaviour
         mover.SetActive(false);
         isBlack = blackActive;
         isTransform = true;
+        isTransforming = false;
     }
 
     private void PushEnemies(Vector3 playerPos, Vector2 moveDir)
@@ -100,9 +103,6 @@ public class PlayerManager : MonoBehaviour
         Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(playerPos, pushRadius, enemyLayer);
         foreach (Collider2D col in hitEnemies)
         {
-            EnemyAI enemy = col.GetComponent<EnemyAI>();
-            if (enemy == null) continue;
-
             // 플레이어가 바라보는 방향 기준 "수직 방향" 계산
             Vector2 pushDir = Vector2.Perpendicular(moveDir).normalized;
 
@@ -110,8 +110,20 @@ public class PlayerManager : MonoBehaviour
             if (Random.value > 0.5f)
                 pushDir = -pushDir;
 
-            // EnemyAI에 밀기 적용
-            enemy.Push(pushDir, pushForce, 0.2f);
+            switch (col.gameObject.name)
+            {
+                case "BasicEnemy":
+                    EnemyAI enemy = col.GetComponent<EnemyAI>();
+                    enemy.Push(pushDir, pushForce, 0.2f);
+                    break;
+                case "BulletEnemy":
+                    RangeEnemy rangeEnemy = col.GetComponent<RangeEnemy>();
+                    rangeEnemy.Push(pushDir, pushForce, 0.2f);
+                    break;
+                default:
+                    Debug.LogError("WrongName");
+                    break;
+            }
         }
     }
 
@@ -131,10 +143,13 @@ public class PlayerManager : MonoBehaviour
 
     public void TakeDamage(int amount)
     {
-        currentHealth -= amount;
-        Debug.Log($"Player HP: {currentHealth}");
-        if (currentHealth <= 0)
-            Die();
+        if (!isTransforming)
+        {
+            currentHealth -= amount;
+            Debug.Log($"Player HP: {currentHealth}");
+            if (currentHealth <= 0)
+                Die();
+        }
     }
 
     private void Die()

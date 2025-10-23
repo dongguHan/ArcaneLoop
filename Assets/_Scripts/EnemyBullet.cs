@@ -49,7 +49,7 @@ public class EnemyBullet : MonoBehaviour
         {
             // 통합된 데미지 API가 PlayerManager라면
             PlayerInvulnerability invuln = other.GetComponent<PlayerInvulnerability>();
-            if (invuln != null && invuln.CanTakeDamage())
+            if (invuln != null && invuln.CanTakeDamage() && other.gameObject.activeSelf)
             {
                 PlayerManager pm = other.GetComponentInParent<PlayerManager>();
                 if (pm != null)

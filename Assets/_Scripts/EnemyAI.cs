@@ -110,7 +110,7 @@ public class EnemyAI : MonoBehaviour
         yield return new WaitForSeconds(attackWindupTime);
 
         float distanceToPlayer = Vector2.Distance(transform.position, player.transform.position);
-        if (distanceToPlayer <= attackRange)
+        if (distanceToPlayer <= attackRange && player.activeSelf)
         {
             PlayerInvulnerability invuln = player.GetComponent<PlayerInvulnerability>();
             if (invuln != null && invuln.CanTakeDamage())
