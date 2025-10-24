@@ -6,7 +6,7 @@ public class AttackPool : MonoBehaviour
 {
     [SerializeField] private GameObject trianglePrefab;
     [SerializeField] private GameObject squarePrefab;
-    [SerializeField] private int initialPoolSize = 10;
+    [SerializeField] private int initialPoolSize = 2;
 
     private Queue<GameObject> trianglePool = new Queue<GameObject>();
     private Queue<GameObject> squarePool = new Queue<GameObject>();

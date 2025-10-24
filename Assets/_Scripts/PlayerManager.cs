@@ -11,11 +11,17 @@ public class PlayerManager : MonoBehaviour
 
     [Header("Movement Time Settings")]
     public float minMoveTime = 0.1f;
-    public float maxMoveTime = 0.7f;
+    public float maxMoveTime = 1f;
+
+    [Header("Enemy Push Settings")]
+    public float pushForce = 10f;               // 적을 밀어내는 힘
+    public float pushRadius = 0.6f;            // 적 감지 반경
+    public LayerMask enemyLayer;               // Enemy 레이어
 
     [Header("Shared HP")]
     public int maxHealth = 5;
     private int currentHealth;
+    private bool isTransforming = false;
 
     [HideInInspector] public bool isBlack = false;
     [HideInInspector] public bool isTransform = false;
@@ -53,9 +59,12 @@ public class PlayerManager : MonoBehaviour
 
     private IEnumerator MoveAndActivateGray(GameObject mover, Vector3 targetPosition, bool blackActive)
     {
+        isTransforming = true;
         mover.SetActive(true);
 
         Vector3 start = mover.transform.position;
+        Vector3 moveDir = (targetPosition - start).normalized;
+
         float distance = Vector3.Distance(start, targetPosition);
         float maxDistance = Vector3.Distance(Vector3.zero, new Vector3(1920f, 1080f, 0f));
         float moveTime = Mathf.Lerp(minMoveTime, maxMoveTime, distance / maxDistance);
@@ -63,7 +72,12 @@ public class PlayerManager : MonoBehaviour
         float elapsed = 0f;
         while (elapsed < moveTime)
         {
-            mover.transform.position = Vector3.Lerp(start, targetPosition, elapsed / moveTime);
+            Vector3 currentPos = Vector3.Lerp(start, targetPosition, elapsed / moveTime);
+
+            // 이동 경로상의 적 밀기
+            PushEnemies(currentPos, moveDir);
+
+            mover.transform.position = currentPos;
             elapsed += Time.deltaTime;
             yield return null;
         }
@@ -81,6 +95,36 @@ public class PlayerManager : MonoBehaviour
         mover.SetActive(false);
         isBlack = blackActive;
         isTransform = true;
+        isTransforming = false;
+    }
+
+    private void PushEnemies(Vector3 playerPos, Vector2 moveDir)
+    {
+        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(playerPos, pushRadius, enemyLayer);
+        foreach (Collider2D col in hitEnemies)
+        {
+            // 플레이어가 바라보는 방향 기준 "수직 방향" 계산
+            Vector2 pushDir = Vector2.Perpendicular(moveDir).normalized;
+
+            // 좌우 랜덤 선택 (왼쪽 또는 오른쪽)
+            if (Random.value > 0.5f)
+                pushDir = -pushDir;
+
+            switch (col.gameObject.name)
+            {
+                case "BasicEnemy":
+                    EnemyAI enemy = col.GetComponent<EnemyAI>();
+                    enemy.Push(pushDir, pushForce, 0.2f);
+                    break;
+                case "BulletEnemy":
+                    RangeEnemy rangeEnemy = col.GetComponent<RangeEnemy>();
+                    rangeEnemy.Push(pushDir, pushForce, 0.2f);
+                    break;
+                default:
+                    Debug.LogError("WrongName");
+                    break;
+            }
+        }
     }
 
     private void DeactivateGray()
@@ -99,10 +143,13 @@ public class PlayerManager : MonoBehaviour
 
     public void TakeDamage(int amount)
     {
-        currentHealth -= amount;
-        Debug.Log($"Player HP: {currentHealth}");
-        if (currentHealth <= 0)
-            Die();
+        if (!isTransforming)
+        {
+            currentHealth -= amount;
+            Debug.Log($"Player HP: {currentHealth}");
+            if (currentHealth <= 0)
+                Die();
+        }
     }
 
     private void Die()
@@ -115,24 +162,25 @@ public class PlayerManager : MonoBehaviour
     public Vector3 GetCameraTargetPosition()
     {
         if (IsGrayActive)
-        {
-            // Gray만 추적
             return playerGray.transform.position;
-        }
 
-        // 두 캐릭터 평균 위치 추적
         if (playerBlack.activeSelf && playerWhite.activeSelf)
-        {
             return (playerBlack.transform.position + playerWhite.transform.position) * 0.5f;
-        }
 
-        // 예외적으로 하나만 활성일 경우 대비
         if (playerBlack.activeSelf)
             return playerBlack.transform.position;
         if (playerWhite.activeSelf)
             return playerWhite.transform.position;
 
-        // 기본값
         return transform.position;
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        if (playerBlack != null)
+            Gizmos.DrawWireSphere(playerBlack.transform.position, pushRadius);
+        if (playerWhite != null)
+            Gizmos.DrawWireSphere(playerWhite.transform.position, pushRadius);
     }
 }

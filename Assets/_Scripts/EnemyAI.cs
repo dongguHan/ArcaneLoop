@@ -10,11 +10,11 @@ public class EnemyAI : MonoBehaviour
     public LayerMask obstacleLayer;
 
     [Header("Attack Settings")]
-    public float attackRange = 1.5f;        // 공격 시작 범위
-    public float attackWindupTime = 0.5f;   // 공격 준비 시간
-    public float damageTime = 0.2f;         // 공격 판정 타이밍
-    public float attackEndTime = 0.3f;      // 공격 후 마무리 시간
-    public float attackCooldown = 1.5f;     // 공격 쿨다운
+    public float attackRange = 1.5f;
+    public float attackWindupTime = 0.5f;
+    public float damageTime = 0.2f;
+    public float attackEndTime = 0.3f;
+    public float attackCooldown = 1.5f;
 
     private Rigidbody2D rb;
     private Transform targetPlayer;
@@ -23,16 +23,26 @@ public class EnemyAI : MonoBehaviour
     private bool isDead = false;
     private bool isAttacking = false;
 
+    // === Push 관련 ===
+    private Vector2 pushVelocity = Vector2.zero;
+    private float pushTimeRemaining = 0f;
+    private bool isBeingPushed = false;
+    [Header("Push Settings")]
+    public float pushDamping = 5f;  // 감속 속도 (클수록 빨리 멈춤)
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        rb.bodyType = RigidbodyType2D.Kinematic;
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
     }
 
     void Update()
     {
         if (isDead) return;
+
+        // 밀리는 중이면 AI 이동 중단
+        if (isBeingPushed)
+            return;
 
         FindNearestPlayer();
 
@@ -47,6 +57,27 @@ public class EnemyAI : MonoBehaviour
             else
             {
                 FollowPlayer();
+            }
+        }
+    }
+
+    void FixedUpdate()
+    {
+        // Push 중일 때만 처리
+        if (isBeingPushed && pushTimeRemaining > 0f)
+        {
+            Vector2 newPos = rb.position + pushVelocity * Time.fixedDeltaTime;
+            rb.MovePosition(newPos);
+
+            // 감속
+            pushVelocity = Vector2.Lerp(pushVelocity, Vector2.zero, pushDamping * Time.fixedDeltaTime);
+
+            pushTimeRemaining -= Time.fixedDeltaTime;
+            if (pushTimeRemaining <= 0.01f || pushVelocity.sqrMagnitude < 0.001f)
+            {
+                isBeingPushed = false;
+                pushVelocity = Vector2.zero;
+                pushTimeRemaining = 0f;
             }
         }
     }
@@ -73,16 +104,13 @@ public class EnemyAI : MonoBehaviour
 
     IEnumerator AttackRoutine(GameObject player)
     {
-        // 공격 시작: 이동 정지
         isAttacking = true;
         rb.linearVelocity = Vector2.zero;
 
-        // 공격 준비 (모션 예열)
         yield return new WaitForSeconds(attackWindupTime);
 
-        // 공격 판정 (이 시점에서만 데미지)
         float distanceToPlayer = Vector2.Distance(transform.position, player.transform.position);
-        if (distanceToPlayer <= attackRange)
+        if (distanceToPlayer <= attackRange && player.activeSelf)
         {
             PlayerInvulnerability invuln = player.GetComponent<PlayerInvulnerability>();
             if (invuln != null && invuln.CanTakeDamage())
@@ -96,16 +124,11 @@ public class EnemyAI : MonoBehaviour
             }
         }
 
-        // 공격 후 모션 시간 (공격 후 자연스러운 딜레이)
         yield return new WaitForSeconds(attackEndTime);
-
-        // 공격 모션 끝! → 바로 이동 가능
         isAttacking = false;
 
-        // 다음 공격까지 쿨타임 (이동 가능, 공격만 금지)
         yield return new WaitForSeconds(attackCooldown);
     }
-
 
     void OnTriggerEnter2D(Collider2D other)
     {
@@ -183,5 +206,23 @@ public class EnemyAI : MonoBehaviour
             if (IsValidPlayer(p)) return true;
         }
         return false;
+    }
+
+    // === 여기서부터 Push 관련 추가 ===
+    public void Push(Vector2 dir, float force, float duration)
+    {
+        if (isDead) return;
+        if (dir == Vector2.zero) return;
+
+        // 이동 중이던 AI를 잠시 멈춤
+        isBeingPushed = true;
+        pushVelocity = dir.normalized * force;
+        pushTimeRemaining = Mathf.Max(duration, 0.01f);
+
+        // 공격 중이라면 공격 취소 가능하게 하려면 아래 주석 해제
+        isAttacking = false;
+
+        // 디버그 확인용
+        // Debug.Log($"{name} pushed dir={dir}, force={force}, duration={duration}");
     }
 }
