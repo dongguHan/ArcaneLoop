@@ -1124,6 +1124,7 @@ GameObject:
   - component: {fileID: 1321298457}
   - component: {fileID: 1321298459}
   - component: {fileID: 1321298458}
+  - component: {fileID: 1321298460}
   m_Layer: 3
   m_Name: White
   m_TagString: PlayerWhite
