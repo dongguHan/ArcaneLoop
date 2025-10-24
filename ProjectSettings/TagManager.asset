@@ -19,9 +19,9 @@ TagManager:
   - Enemy
   - Bullet
   - PlayerAttack
-  - 
-  - 
-  - 
+  - WallTile
+  - WaterTile
+  - ObjectTile
   - 
   - 
   - 
