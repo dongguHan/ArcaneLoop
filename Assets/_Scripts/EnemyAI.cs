@@ -19,6 +19,7 @@ public class EnemyAI : MonoBehaviour
     private Rigidbody2D rb;
     private Transform targetPlayer;
     private SpriteRenderer spriteRenderer;
+    private BoxCollider2D box;  // sprite 추가시 Collider도 바꾸기
 
     private bool isDead = false;
     private bool isAttacking = false;
@@ -34,6 +35,7 @@ public class EnemyAI : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        box= GetComponent<BoxCollider2D>();
     }
 
     void Update()
@@ -66,13 +68,32 @@ public class EnemyAI : MonoBehaviour
         // Push 중일 때만 처리
         if (isBeingPushed && pushTimeRemaining > 0f)
         {
-            Vector2 newPos = rb.position + pushVelocity * Time.fixedDeltaTime;
-            rb.MovePosition(newPos);
+            Vector2 dir = pushVelocity.normalized;
+            float moveDist = pushVelocity.magnitude * Time.fixedDeltaTime;
+            Vector2 nextPos = rb.position + dir * moveDist;
 
-            // 감속
+            // === [추가] 타일맵 충돌 검사 ===
+            float radius = 0.4f; // 적의 크기에 맞게 조정 (CircleCollider2D 기준)
+            LayerMask combinedMask = LayerMask.GetMask("WallTile", "WaterTile", "ObjectTile");
+
+            RaycastHit2D hit = Physics2D.BoxCast(rb.position, box.size, 0f, dir, moveDist, combinedMask);
+
+            if (hit.collider != null)
+            {
+                // 벽에 닿으면 이동 중단
+                nextPos = hit.point - dir * (radius + 0.01f);
+                isBeingPushed = false;
+                pushVelocity = Vector2.zero;
+                pushTimeRemaining = 0f;
+            }
+
+            // 위치 업데이트
+            rb.MovePosition(nextPos);
+
+            // 감속 처리
             pushVelocity = Vector2.Lerp(pushVelocity, Vector2.zero, pushDamping * Time.fixedDeltaTime);
-
             pushTimeRemaining -= Time.fixedDeltaTime;
+
             if (pushTimeRemaining <= 0.01f || pushVelocity.sqrMagnitude < 0.001f)
             {
                 isBeingPushed = false;
@@ -82,25 +103,40 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
+
     void FollowPlayer()
     {
+        if (targetPlayer == null) return;
+
         Vector2 direction = (targetPlayer.position - transform.position).normalized;
 
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, direction, obstacleCheckDistance, obstacleLayer);
+        // BoxCollider2D 정보 가져오기
+        Vector2 boxSize = box != null ? box.size : Vector2.one * 0.5f;
+        float moveDist = speed * Time.deltaTime;
+        LayerMask combinedMask = LayerMask.GetMask("WallTile", "WaterTile", "ObjectTile");
+
+        // 이동 경로에 충돌 검사
+        RaycastHit2D hit = Physics2D.BoxCast(rb.position, boxSize, 0f, direction, moveDist, combinedMask);
+
         if (hit.collider != null)
         {
-            Vector2 perpDirection = Vector2.Perpendicular(direction);
-            direction = (Random.value > 0.5f) ? perpDirection : -perpDirection;
+            // 벽에 막히면 더 이상 이동하지 않음
+            // 또는 벽을 따라 미끄러지게 하려면 아래의 주석된 코드 사용 가능
+            // direction = Vector2.Perpendicular(hit.normal);
+            return;
         }
 
-        Vector2 newPos = (Vector2)transform.position + direction * speed * Time.deltaTime;
+        // 이동
+        Vector2 newPos = rb.position + direction * moveDist;
         rb.MovePosition(newPos);
 
+        // 시각 방향 (왼쪽/오른쪽)
         if (spriteRenderer != null)
         {
             spriteRenderer.flipX = (targetPlayer.position.x < transform.position.x);
         }
     }
+
 
     IEnumerator AttackRoutine(GameObject player)
     {

@@ -670,9 +670,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7988285949715017776, guid: eaecc03e21ab3334da157cb2909b6df5, type: 3}
+      propertyPath: bulletPool
+      value: 
+      objectReference: {fileID: 1106163650}
+    - target: {fileID: 7988285949715017776, guid: eaecc03e21ab3334da157cb2909b6df5, type: 3}
+      propertyPath: playerLayerMask.m_Bits
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 8072102217478899571, guid: eaecc03e21ab3334da157cb2909b6df5, type: 3}
       propertyPath: m_Name
       value: BulletEnemy
+      objectReference: {fileID: 0}
+    - target: {fileID: 8072102217478899571, guid: eaecc03e21ab3334da157cb2909b6df5, type: 3}
+      propertyPath: m_Layer
+      value: 6
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1444,6 +1456,48 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &764155382 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 10111860481147944, guid: a579da39e5af0794e8ae9f9292bbfcce, type: 3}
+  m_PrefabInstance: {fileID: 945673634703171244}
+  m_PrefabAsset: {fileID: 0}
+--- !u!70 &764155383
+CapsuleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 764155382}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: -0.0000009536743}
+  m_Size: {x: 1, y: 1}
+  m_Direction: 0
 --- !u!1 &1049063055
 GameObject:
   m_ObjectHideFlags: 0
@@ -1516,6 +1570,26 @@ PrefabInstance:
       propertyPath: m_Name
       value: BasicEnemy
       objectReference: {fileID: 0}
+    - target: {fileID: 1985197882131813535, guid: d39daf41124cf9a468c5241d3c439ed9, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4590667019661442775, guid: d39daf41124cf9a468c5241d3c439ed9, type: 3}
+      propertyPath: wallLayer.m_Bits
+      value: 512
+      objectReference: {fileID: 0}
+    - target: {fileID: 4590667019661442775, guid: d39daf41124cf9a468c5241d3c439ed9, type: 3}
+      propertyPath: waterLayer.m_Bits
+      value: 1024
+      objectReference: {fileID: 0}
+    - target: {fileID: 4590667019661442775, guid: d39daf41124cf9a468c5241d3c439ed9, type: 3}
+      propertyPath: objectLayer.m_Bits
+      value: 2048
+      objectReference: {fileID: 0}
+    - target: {fileID: 4590667019661442775, guid: d39daf41124cf9a468c5241d3c439ed9, type: 3}
+      propertyPath: obstacleLayer.m_Bits
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 8960499252240527405, guid: d39daf41124cf9a468c5241d3c439ed9, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -1566,6 +1640,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8960499252240527405, guid: d39daf41124cf9a468c5241d3c439ed9, type: 3}
   m_PrefabInstance: {fileID: 1103156817}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1106163650 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4826232295987587233, guid: a579da39e5af0794e8ae9f9292bbfcce, type: 3}
+  m_PrefabInstance: {fileID: 945673634703171244}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ade5094d1c454f84b9e21070ee1894cd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1212061444
 GameObject:
   m_ObjectHideFlags: 0
@@ -2745,6 +2830,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 10111860481147944, guid: a579da39e5af0794e8ae9f9292bbfcce, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 4104020421379407626, guid: a579da39e5af0794e8ae9f9292bbfcce, type: 3}
+      propertyPath: wallLayer.m_Bits
+      value: 512
+      objectReference: {fileID: 0}
+    - target: {fileID: 4104020421379407626, guid: a579da39e5af0794e8ae9f9292bbfcce, type: 3}
+      propertyPath: objectLayer.m_Bits
+      value: 2048
+      objectReference: {fileID: 0}
     - target: {fileID: 5548844038481020499, guid: a579da39e5af0794e8ae9f9292bbfcce, type: 3}
       propertyPath: m_Name
       value: EnemyBulletPool
@@ -2792,7 +2889,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 10111860481147944, guid: a579da39e5af0794e8ae9f9292bbfcce, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 764155383}
   m_SourcePrefab: {fileID: 100100000, guid: a579da39e5af0794e8ae9f9292bbfcce, type: 3}
 --- !u!1001 &1442486490502595928
 PrefabInstance:
@@ -2802,6 +2902,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 434341366580304189, guid: 3b84fcdccc517944396bd8746cc6343b, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 5020831534694908293, guid: 3b84fcdccc517944396bd8746cc6343b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -2842,6 +2946,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5611677995389797047, guid: 3b84fcdccc517944396bd8746cc6343b, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 8649050581806500556, guid: 3b84fcdccc517944396bd8746cc6343b, type: 3}
       propertyPath: m_Name
       value: PlayerAttack
@@ -2862,6 +2970,10 @@ PrefabInstance:
     - target: {fileID: 367767312737950448, guid: 965659c6fe6b4cf41bd10786b7b97647, type: 3}
       propertyPath: m_Name
       value: Gray
+      objectReference: {fileID: 0}
+    - target: {fileID: 367767312737950448, guid: 965659c6fe6b4cf41bd10786b7b97647, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 2460441088496863791, guid: 965659c6fe6b4cf41bd10786b7b97647, type: 3}
       propertyPath: playerManager
@@ -2931,6 +3043,18 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: -843009861, guid: 3fe6638b8ae09dd4ca81839da10cd8e2, type: 3}
+    - target: {fileID: 6572065027795751582, guid: 965659c6fe6b4cf41bd10786b7b97647, type: 3}
+      propertyPath: m_Color.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6572065027795751582, guid: 965659c6fe6b4cf41bd10786b7b97647, type: 3}
+      propertyPath: m_Color.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6572065027795751582, guid: 965659c6fe6b4cf41bd10786b7b97647, type: 3}
+      propertyPath: m_Color.r
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2982,6 +3106,10 @@ PrefabInstance:
     - target: {fileID: 4331441826494988818, guid: ada34c86527a14e4dae4bc9bff208233, type: 3}
       propertyPath: m_Name
       value: Black
+      objectReference: {fileID: 0}
+    - target: {fileID: 4331441826494988818, guid: ada34c86527a14e4dae4bc9bff208233, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 4680403357909487702, guid: ada34c86527a14e4dae4bc9bff208233, type: 3}
       propertyPath: m_LocalPosition.x
@@ -3098,6 +3226,10 @@ PrefabInstance:
     - target: {fileID: 6134539935150104409, guid: 3901b4a87b17e2445bb0d0b0d5da0aa3, type: 3}
       propertyPath: m_Name
       value: White
+      objectReference: {fileID: 0}
+    - target: {fileID: 6134539935150104409, guid: 3901b4a87b17e2445bb0d0b0d5da0aa3, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
