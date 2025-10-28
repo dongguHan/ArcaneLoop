@@ -9,9 +9,15 @@ public class EnemyBullet : MonoBehaviour
     float lifetime;
     float spawnTime;
 
+    [Header("Blocked by Tilemap")]
+    public LayerMask wallLayer;
+    public LayerMask objectLayer;
+    private CapsuleCollider2D capsule;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        capsule = GetComponent<CapsuleCollider2D>();
     }
 
     public void Init(Vector2 direction, float spd, float life)
@@ -62,8 +68,18 @@ public class EnemyBullet : MonoBehaviour
             }
         }
 
-        // 벽 또는 기타에 닿으면 반환 (필요시 레이어 검사 추가)
-        ReturnToPool();
+        // 2) 벽/오브젝트 레이어 검사 (LayerMask로 안전하게 처리)
+        if (IsInLayerMask(other.gameObject, wallLayer) || IsInLayerMask(other.gameObject, objectLayer))
+        {
+            ReturnToPool();
+            return;
+        }
+    }
+
+    // 헬퍼: GameObject가 LayerMask에 포함되는지 체크
+    private bool IsInLayerMask(GameObject obj, LayerMask mask)
+    {
+        return ((mask.value & (1 << obj.layer)) != 0);
     }
 
     void ReturnToPool()

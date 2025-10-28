@@ -64,16 +64,12 @@ public class PlayerMove : MonoBehaviour
         Vector2 move = movement * speed * Time.fixedDeltaTime;
 
         // 현재는 임의로 타일 레이어 이름 지정 만약 바꾸면 수정 필요
-        int wallTile = 1 << LayerMask.NameToLayer("WallTile");
-        int combinedMask = wallTile;
-
+        LayerMask combinedMask;
         if (gameObject.CompareTag("PlayerBlack") || playerManager.isBlack)
-        {
-            int waterTile = 1 << LayerMask.NameToLayer("WaterTile");
-            int objectTile = 1 << LayerMask.NameToLayer("ObjectTile");
+            combinedMask = LayerMask.GetMask("WallTile", "WaterTile", "ObjectTile");
 
-            combinedMask = wallTile | waterTile | objectTile;
-        }
+        else
+            combinedMask = LayerMask.GetMask("WallTile");
 
         // 이동하려는 방향으로 CapsuleCast 실행
         RaycastHit2D hit = Physics2D.CapsuleCast(
@@ -97,11 +93,6 @@ public class PlayerMove : MonoBehaviour
             float distance = Mathf.Max(hit.distance - 0.01f, 0f);
             rb.MovePosition(rb.position + movement * distance);
         }
-    }
-
-    void HelperRaycast(Vector2 move, LayerMask layer)
-    {
-
     }
 
     private void HandleInput()

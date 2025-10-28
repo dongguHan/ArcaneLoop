@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class RangeEnemy : MonoBehaviour
 {
@@ -20,6 +21,7 @@ public class RangeEnemy : MonoBehaviour
     private bool isDead = false;
     private SpriteRenderer spriteRenderer;
     private Rigidbody2D rb;
+    private BoxCollider2D box;
 
     private Vector2 pushVelocity = Vector2.zero;
     private float pushTimeRemaining = 0f;
@@ -31,6 +33,7 @@ public class RangeEnemy : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        box = GetComponent<BoxCollider2D>();
     }
 
     void Update()
@@ -56,15 +59,35 @@ public class RangeEnemy : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if(isBeingPushed && pushTimeRemaining > 0f)
+        // Push 중일 때만 처리
+        if (isBeingPushed && pushTimeRemaining > 0f)
         {
-            Vector2 newPos = rb.position + pushVelocity * Time.fixedDeltaTime;
-            rb.MovePosition(newPos);
+            Vector2 dir = pushVelocity.normalized;
+            float moveDist = pushVelocity.magnitude * Time.fixedDeltaTime;
+            Vector2 nextPos = rb.position + dir * moveDist;
 
-            // 감속
+            // === [추가] 타일맵 충돌 검사 ===
+            float radius = 0.4f; // 적의 크기에 맞게 조정 (CircleCollider2D 기준)
+            LayerMask combinedMask = LayerMask.GetMask("WallTile", "WaterTile", "ObjectTile");
+
+            RaycastHit2D hit = Physics2D.BoxCast(rb.position, box.size, 0f, dir, moveDist, combinedMask);
+
+            if (hit.collider != null)
+            {
+                // 벽에 닿으면 이동 중단
+                nextPos = hit.point - dir * (radius + 0.01f);
+                isBeingPushed = false;
+                pushVelocity = Vector2.zero;
+                pushTimeRemaining = 0f;
+            }
+
+            // 위치 업데이트
+            rb.MovePosition(nextPos);
+
+            // 감속 처리
             pushVelocity = Vector2.Lerp(pushVelocity, Vector2.zero, pushDamping * Time.fixedDeltaTime);
-
             pushTimeRemaining -= Time.fixedDeltaTime;
+
             if (pushTimeRemaining <= 0.01f || pushVelocity.sqrMagnitude < 0.001f)
             {
                 isBeingPushed = false;

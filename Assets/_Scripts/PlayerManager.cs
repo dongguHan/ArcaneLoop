@@ -138,6 +138,7 @@ public class PlayerManager : MonoBehaviour
         playerBlack.SetActive(true);
         playerWhite.SetActive(true);
 
+        isBlack = false;
         isTransform = false;
     }
 
