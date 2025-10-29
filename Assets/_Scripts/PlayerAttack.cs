@@ -16,7 +16,7 @@ public class PlayerAttack : MonoBehaviour
 
     private float lastAttackTime;
     private int comboStep = 0;
-    private bool isAttacking = false;
+    public bool isAttacking = false;
 
     void Update()
     {

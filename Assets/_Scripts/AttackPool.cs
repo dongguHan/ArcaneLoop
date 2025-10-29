@@ -1,15 +1,17 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System.Collections;
 
 public class AttackPool : MonoBehaviour
 {
     [SerializeField] private GameObject trianglePrefab;
     [SerializeField] private GameObject squarePrefab;
-    [SerializeField] private int initialPoolSize = 10;
+    [SerializeField] private int initialPoolSize = 2;
 
     private Queue<GameObject> trianglePool = new Queue<GameObject>();
     private Queue<GameObject> squarePool = new Queue<GameObject>();
+
+    // === 추가: 공격 ID 생성기 ===
+    private int nextAttackId = 0;
 
     void Awake()
     {
@@ -27,23 +29,34 @@ public class AttackPool : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 공격 오브젝트를 풀에서 가져와 활성화하고 고유 attackId 부여
+    /// </summary>
     public GameObject GetObject(bool isTriangle)
     {
         Queue<GameObject> pool = isTriangle ? trianglePool : squarePool;
+        GameObject obj;
+
         if (pool.Count > 0)
         {
-            var obj = pool.Dequeue();
-            obj.SetActive(true);
-            return obj;
+            obj = pool.Dequeue();
         }
         else
         {
-            // 풀에 없으면 새로 생성 (필요하다면 제한 가능)
             var prefab = isTriangle ? trianglePrefab : squarePrefab;
-            var obj = Instantiate(prefab, transform);
-            obj.SetActive(true);
-            return obj;
+            obj = Instantiate(prefab, transform);
         }
+
+        obj.SetActive(true);
+
+        // === 공격 ID 부여 ===
+        AttackObject attack = obj.GetComponent<AttackObject>();
+        if (attack != null)
+        {
+            attack.attackId = nextAttackId++;
+        }
+
+        return obj;
     }
 
     public void ReturnObject(GameObject obj, bool isTriangle)
