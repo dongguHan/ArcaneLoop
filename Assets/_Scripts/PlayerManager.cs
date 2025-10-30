@@ -26,6 +26,13 @@ public class PlayerManager : MonoBehaviour
     [HideInInspector] public bool isBlack = false;
     [HideInInspector] public bool isTransform = false;
 
+    [Header("Player Gray Animator Controller")]
+    public RuntimeAnimatorController blackGray;
+    public RuntimeAnimatorController whiteGray;
+
+    [Header("Gray Particle")]
+    public ParticleSystem grayBlackParticle;
+
     public bool IsGrayActive => playerGray != null && playerGray.activeSelf;
 
     void Start()
@@ -39,6 +46,29 @@ public class PlayerManager : MonoBehaviour
     void Update()
     {
         HandleTransformInput();
+        HandleGrayParticle();
+    }
+
+    private void HandleGrayParticle()
+    {
+        if (!grayBlackParticle) return;
+
+        bool shouldPlay = playerGray.activeSelf &&
+                          playerGray.GetComponent<Animator>()?.runtimeAnimatorController == blackGray;
+
+        if (shouldPlay && !grayBlackParticle.isPlaying)
+        {
+            grayBlackParticle.Play();
+        }
+        else if (!shouldPlay && grayBlackParticle.isPlaying)
+        {
+            grayBlackParticle.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+        }
+
+        if (playerGray && grayBlackParticle.isPlaying)
+        {
+            grayBlackParticle.transform.position = playerGray.transform.position;
+        }
     }
 
     private void HandleTransformInput()
@@ -86,13 +116,20 @@ public class PlayerManager : MonoBehaviour
 
         // Gray 활성화
         playerGray.transform.position = targetPosition;
+        if (blackActive)
+        {
+            playerGray.GetComponent<Animator>().runtimeAnimatorController = blackGray;
+        }
+        else
+        {
+            playerGray.GetComponent<Animator>().runtimeAnimatorController = whiteGray;
+        }
         playerGray.SetActive(true);
 
         // Black/White 비활성화
         playerBlack.SetActive(false);
         playerWhite.SetActive(false);
 
-        mover.SetActive(false);
         isBlack = blackActive;
         isTransform = true;
         isTransforming = false;
