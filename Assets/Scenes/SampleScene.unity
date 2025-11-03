@@ -640,6 +640,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   attackId: 0
+  isBlackAttack: 0
 --- !u!1001 &385979052
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1639,6 +1640,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   attackId: 0
+  isBlackAttack: 1
 --- !u!1 &1212061444
 GameObject:
   m_ObjectHideFlags: 0
@@ -3507,14 +3509,6 @@ PrefabInstance:
       propertyPath: playerManager
       value: 
       objectReference: {fileID: 1049063057}
-    - target: {fileID: 3540871994351075457, guid: 965659c6fe6b4cf41bd10786b7b97647, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3540871994351075457, guid: 965659c6fe6b4cf41bd10786b7b97647, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 3540871994351075457, guid: 965659c6fe6b4cf41bd10786b7b97647, type: 3}
       propertyPath: m_LocalPosition.x
       value: 3

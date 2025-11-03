@@ -29,6 +29,7 @@ public class EnemyAI : MonoBehaviour
     private Vector2 pushVelocity = Vector2.zero;
     private float pushTimeRemaining = 0f;
     private bool isBeingPushed = false;
+    private bool isBeingAttackPushed = false; // 공격 넉백용 push
     [Header("Push Settings")]
     public float pushDamping = 5f;  // 감속 속도 (클수록 빨리 멈춤)
 
@@ -37,7 +38,7 @@ public class EnemyAI : MonoBehaviour
     private Queue<int> attackIdQueue = new Queue<int>();
     private const int MaxStoredIds = 10;
     private float health;
-    public const float maxHealth = 3;
+    public float maxHealth = 3;
 
     void Start()
     {
@@ -74,53 +75,50 @@ public class EnemyAI : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (isBeingPushed && pushTimeRemaining > 0f)
+        if ((isBeingPushed || isBeingAttackPushed) && pushTimeRemaining > 0f)
         {
             Vector2 dir = pushVelocity.normalized;
             float moveDist = pushVelocity.magnitude * Time.fixedDeltaTime;
 
             Vector2 boxCenter = rb.position + box.offset;
-            Vector2 halfSize = box.size * 0.5f; // 절반 크기 계산
-
+            Vector2 halfSize = box.size * 0.5f;
             LayerMask combinedMask = LayerMask.GetMask("WallTile", "WaterTile", "ObjectTile");
 
-            // 콜라이더의 반쪽 길이만큼 더 검사
             RaycastHit2D hit = Physics2D.BoxCast(
                 boxCenter,
                 box.size,
                 0f,
                 dir,
-                moveDist + Mathf.Max(halfSize.x, halfSize.y), // 가장 긴 변 기준
+                moveDist + Mathf.Max(halfSize.x, halfSize.y),
                 combinedMask
             );
 
             if (hit.collider != null)
             {
-                // 박스의 앞면이 벽에 닿는 순간을 기준으로 정지
-                float distanceToWall = hit.distance;
-                if (distanceToWall < 0f) distanceToWall = 0f;
-
-                Vector2 stopPos = rb.position + dir * distanceToWall;
-                rb.MovePosition(stopPos);
-
-                isBeingPushed = false;
-                pushVelocity = Vector2.zero;
-                pushTimeRemaining = 0f;
-                return;
+                if (isBeingAttackPushed)
+                {
+                    // 공격 넉백은 벽에서 튕김
+                    Vector2 reflect = Vector2.Reflect(pushVelocity, hit.normal);
+                    pushVelocity = reflect;
+                    return;
+                }
+                else
+                {
+                    // 기존 push는 stop
+                    rb.MovePosition(rb.position + dir * hit.distance);
+                    StopPush();
+                    return;
+                }
             }
 
-            // 이동
             rb.MovePosition(rb.position + dir * moveDist);
 
-            // 감속
             pushVelocity = Vector2.Lerp(pushVelocity, Vector2.zero, pushDamping * Time.fixedDeltaTime);
             pushTimeRemaining -= Time.fixedDeltaTime;
 
             if (pushTimeRemaining <= 0.01f || pushVelocity.sqrMagnitude < 0.001f)
             {
-                isBeingPushed = false;
-                pushVelocity = Vector2.zero;
-                pushTimeRemaining = 0f;
+                StopPush();
             }
         }
     }
@@ -216,23 +214,41 @@ public class EnemyAI : MonoBehaviour
                 recentAttackIds.Remove(oldId);
             }
 
-            GetDamage();
+            GetDamage(attack.isBlackAttack);
         }
     }
 
-    void GetDamage()
+    void GetDamage(bool attackType)
     {
         --health;
-        if (health <= 0) Die();
+
+        if (health <= 0)
+        {
+            Die();
+            return;
+        }
+
+        if (attackType)
+        {
+            // 공격으로 인해 넉백
+            Vector2 attackDir = (transform.position - targetPlayer.position).normalized;
+            StartAttackPush(attackDir, 8f, 0.25f); // force랑 duration은 너가 tune
+        }
+    }
+
+    void StartAttackPush(Vector2 dir, float force, float duration)
+    {
+        isBeingAttackPushed = true;
+        isBeingPushed = false; // 기존 push는 off
+        pushVelocity = dir.normalized * force;
+        pushTimeRemaining = Mathf.Max(duration, 0.01f);
     }
 
     void Die()
     {
         isDead = true;
         isAttacking = false;   // 공격 상태 초기화
-        isBeingPushed = false; // 밀림 상태 초기화
-        pushVelocity = Vector2.zero;
-        pushTimeRemaining = 0f;
+        StopPush();
 
         spriteRenderer.enabled = false;
         rb.linearVelocity = Vector2.zero;  // 속도 정지
@@ -253,7 +269,7 @@ public class EnemyAI : MonoBehaviour
 
         isDead = false;
         isAttacking = false;
-        isBeingPushed = false;
+        StopPush();
 
         health = maxHealth;
 
@@ -261,6 +277,14 @@ public class EnemyAI : MonoBehaviour
 
         // 리스폰 후 바로 타겟 재탐색
         FindNearestPlayer();
+    }
+
+    void StopPush()
+    {
+        isBeingPushed = false;
+        isBeingAttackPushed = false;
+        pushVelocity = Vector2.zero;
+        pushTimeRemaining = 0f;
     }
 
     void FindNearestPlayer()
