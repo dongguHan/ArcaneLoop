@@ -60,9 +60,13 @@ public class CameraFollow : MonoBehaviour
         float clampedX = Mathf.Clamp(smoothPos.x, minBounds.x + camWidth, maxBounds.x - camWidth);
         float clampedY = Mathf.Clamp(smoothPos.y, minBounds.y + camHeight, maxBounds.y - camHeight);
 
-        transform.position = new Vector3(clampedX, clampedY, transform.position.z);
+        Vector3 finalPos = new Vector3(clampedX, clampedY, transform.position.z);
+
+        // 직접 transform.position = finalPos; 하지 말고
+        CameraShakeManager.Instance.SetBasePos(finalPos);
 
         AdjustZoom();
+
     }
 
     void AdjustZoom()

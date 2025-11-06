@@ -16,6 +16,7 @@ public class EnemyAI : MonoBehaviour
     public float damageTime = 0.2f;
     public float attackEndTime = 0.3f;
     public float attackCooldown = 1.5f;
+    [SerializeField] private GameObject attackRangeIndicator;
 
     private Rigidbody2D rb;
     private Transform targetPlayer;
@@ -46,6 +47,8 @@ public class EnemyAI : MonoBehaviour
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         box= GetComponent<BoxCollider2D>();
         health = maxHealth;
+        attackRangeIndicator.transform.localScale = new Vector3(attackRange * 2, attackRange * 2, 1);
+        attackRangeIndicator.SetActive(false);
     }
 
     void Update()
@@ -168,7 +171,13 @@ public class EnemyAI : MonoBehaviour
         isAttacking = true;
         rb.linearVelocity = Vector2.zero;
 
+        // 공격 준비 애니메이션 시작 = 범위 표시 ON
+        attackRangeIndicator.SetActive(true);
+
         yield return new WaitForSeconds(attackWindupTime);
+
+        // 범위 표시 OFF는 windup 끝나고 바로 꺼져야 함
+        attackRangeIndicator.SetActive(false);
 
         float distanceToPlayer = Vector2.Distance(transform.position, player.transform.position);
         if (distanceToPlayer <= attackRange && player.activeSelf)
@@ -221,6 +230,7 @@ public class EnemyAI : MonoBehaviour
     void GetDamage(bool attackType)
     {
         --health;
+        CameraShakeManager.Instance.Shake(0.1f, 0.1f);
 
         if (health <= 0)
         {
@@ -250,6 +260,7 @@ public class EnemyAI : MonoBehaviour
         isAttacking = false;   // 공격 상태 초기화
         StopPush();
 
+        attackRangeIndicator.SetActive(false);
         spriteRenderer.enabled = false;
         rb.linearVelocity = Vector2.zero;  // 속도 정지
         rb.simulated = false;

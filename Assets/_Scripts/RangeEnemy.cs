@@ -151,6 +151,7 @@ public class RangeEnemy : MonoBehaviour
     void GetDamage(bool attackType)
     {
         --health;
+        CameraShakeManager.Instance.Shake(0.1f, 0.1f);
 
         if (health <= 0)
         {

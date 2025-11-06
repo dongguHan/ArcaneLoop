@@ -161,6 +161,7 @@ public class PlayerManager : MonoBehaviour
         if (!isTransforming)
         {
             currentHealth -= amount;
+            CameraShakeManager.Instance.Shake(0.25f, 0.1f);
             Debug.Log($"Player HP: {currentHealth}");
             if (currentHealth <= 0)
                 Die();
