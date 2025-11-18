@@ -22,9 +22,10 @@ public class PlayerManager : MonoBehaviour
     public LayerMask enemyLayer;               // Enemy ·¹ÀÌ¾î
 
     [Header("Shared HP")]
-    public int maxHealth = 5;
-    private int currentHealth;
+    public float maxHealth = 30;
+    private float currentHealth;
     private bool isTransforming = false;
+    public HPBar hpUI;
 
     [HideInInspector] public bool isBlack = false;
     [HideInInspector] public bool isTransform = false;
@@ -162,6 +163,8 @@ public class PlayerManager : MonoBehaviour
         {
             currentHealth -= amount;
             CameraShakeManager.Instance.Shake(0.25f, 0.1f);
+            hpUI.SetHP(currentHealth);
+
             Debug.Log($"Player HP: {currentHealth}");
             if (currentHealth <= 0)
                 Die();
