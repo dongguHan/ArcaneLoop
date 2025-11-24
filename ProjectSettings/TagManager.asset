@@ -9,6 +9,7 @@ TagManager:
   - PlayerGray
   - PlayerAttack
   - Enemy
+  - Breakable
   layers:
   - Default
   - TransparentFX

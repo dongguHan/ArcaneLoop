@@ -25,6 +25,7 @@ public class PlayerMove : MonoBehaviour
     public LayerMask wallLayer;
     public LayerMask waterLayer;
     public LayerMask objectLayer;
+    public LayerMask brokeableLayer;
     private CapsuleCollider2D capsule;
 
     void Awake()

@@ -66,6 +66,14 @@ public class PlayerAttack : MonoBehaviour
         Vector2 normalizedDir = dir.normalized;
         float offset = isTriangle ? triangleOffset : squareOffset;
 
+        if(playerManager.isBlack && attackObj.GetComponent<AttackObject>() != null)
+        {
+            // 공격 위치(실제 타격지점) 계산
+            Vector2 attackPos = (Vector2)transform.position + normalizedDir * offset;
+
+            attackObj.GetComponent<AttackObject>().BreakTiles(attackPos, normalizedDir);
+        }
+
         float elapsed = 0f;
         while (elapsed < attackDuration)
         {
