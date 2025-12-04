@@ -54,7 +54,7 @@ public class PlayerMove : MonoBehaviour
                 lastFacingX = Mathf.Sign(movement.x);
 
             // 스프라이트 기본이 "오른쪽"을 본다고 가정
-            spriteRenderer.flipX = (lastFacingX < 0f);
+            spriteRenderer.flipX = (lastFacingX > 0f);
         }
     }
 
